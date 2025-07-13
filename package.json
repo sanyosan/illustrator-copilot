@@ -8,6 +8,7 @@
     "dev": "nodemon src/index.js",
     "monitor": "node src/monitor.js",
     "process": "node src/processImages.js",
+    "samples": "node scripts/generateSamples.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [

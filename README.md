@@ -35,7 +35,13 @@ illustrator-copilot/
 npm install
 ```
 
-### 2. アプリケーションの起動
+### 2. サンプル画像の生成（オプション）
+
+```bash
+npm run samples
+```
+
+### 3. アプリケーションの起動
 
 ```bash
 npm start
@@ -47,7 +53,7 @@ npm start
 npm run dev
 ```
 
-### 3. Webダッシュボードにアクセス
+### 4. Webダッシュボードにアクセス
 
 ブラウザで `http://localhost:3000` を開きます。
 
@@ -121,3 +127,19 @@ A: `npm install` でパッケージが正しくインストールされている
 
 **Q: 差分画像が生成されない**
 A: 画像形式がサポートされているか確認（PNG、JPEG、BMP、GIF）
+
+### 大容量ファイルの問題
+
+**Q: GitHubにプッシュできない（ファイルサイズエラー）**
+A: `.gitignore`で画像ファイルを除外しています。`docs/LARGE_FILES.md`を参照
+
+**Q: テスト用の画像がない**
+A: `npm run samples` でサンプル画像を生成できます
+
+**Q: Git LFS を使いたい**
+A: 大容量画像ファイルには Git LFS の使用を推奨します
+```bash
+git lfs install
+git lfs track "*.jpg"
+git lfs track "*.png"
+```
