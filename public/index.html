@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Illustrator Copilot - Image Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .status-item {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .status-item .number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .status-item .label {
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .results {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .results h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin-bottom: 10px;
+            background: #f8f9ff;
+            border-radius: 10px;
+            border-left: 4px solid #4caf50;
+        }
+        
+        .result-item.error {
+            border-left-color: #f44336;
+        }
+        
+        .result-name {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .result-similarity {
+            color: #4caf50;
+            font-weight: bold;
+        }
+        
+        .result-error {
+            color: #f44336;
+            font-style: italic;
+        }
+        
+        .log {
+            background: #2c3e50;
+            color: #ecf0f1;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin-bottom: 5px;
+            padding: 5px 0;
+            border-bottom: 1px solid #34495e;
+        }
+        
+        .log-timestamp {
+            color: #95a5a6;
+            margin-right: 10px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 10px;
+        }
+        
+        .status-connected {
+            background-color: #4caf50;
+        }
+        
+        .status-disconnected {
+            background-color: #f44336;
+        }
+        
+        .upload-zone {
+            border: 2px dashed #667eea;
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            background: rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .upload-zone:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: #764ba2;
+        }
+        
+        .upload-zone h4 {
+            color: white;
+            margin-bottom: 10px;
+        }
+        
+        .upload-zone p {
+            color: rgba(255,255,255,0.8);
+        }
+        
+        .process-btn {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .process-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+        
+        .process-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50, #45a049);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .updating {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Illustrator Copilot</h1>
+            <p>画像比較モニタリングシステム</p>
+        </div>
+        
+        <div class="upload-zone">
+            <h4>📁 画像ファイルの配置</h4>
+            <p>元画像を <strong>data/original/</strong> フォルダに、目標画像を <strong>data/target/</strong> フォルダに配置してください</p>
+            <p>同じファイル名の画像が自動的に比較されます</p>
+        </div>
+        
+        <div class="upload-zone" style="border-color: #4caf50;">
+            <h4>👥 人物画像処理</h4>
+            <p>椅子に着座した人物の画像を <strong>data/seated_photos/</strong> フォルダに配置してください</p>
+            <p>顔認証とOCRを使って自動的に縦長画像に加工されます</p>
+            <button id="processBtn" class="process-btn">画像処理を開始</button>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h3>📊 システム状態</h3>
+                <div class="status-item">
+                    <div class="status-indicator" id="connectionStatus"></div>
+                    <span id="connectionText">接続中...</span>
+                </div>
+                <div style="margin-top: 15px;">
+                    <small>最終更新: <span id="lastUpdate">-</span></small>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>📈 統計情報</h3>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div class="number" id="originalCount">0</div>
+                        <div class="label">元画像</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="number" id="targetCount">0</div>
+                        <div class="label">目標画像</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="number" id="comparisonCount">0</div>
+                        <div class="label">比較済み</div>
+                    </div>
+                    <div class="status-item">
+                        <div class="number" id="avgSimilarity">0%</div>
+                        <div class="label">平均類似度</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="results">
+            <h3>🔍 比較結果</h3>
+            <div id="resultsContainer">
+                <p>画像を配置すると、ここに比較結果が表示されます...</p>
+            </div>
+        </div>
+        
+        <div class="log">
+            <h4 style="margin-bottom: 15px;">📝 アクティビティログ</h4>
+            <div id="logContainer">
+                <div class="log-entry">
+                    <span class="log-timestamp">[起動中]</span>
+                    システムを初期化しています...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        class CopilotUI {
+            constructor() {
+                this.socket = io();
+                this.results = {};
+                this.processingProgress = 0;
+                this.setupSocketEvents();
+                this.setupUIEvents();
+                this.updateConnectionStatus(false);
+            }
+            
+            setupUIEvents() {
+                const processBtn = document.getElementById('processBtn');
+                if (processBtn) {
+                    processBtn.addEventListener('click', () => this.startImageProcessing());
+                }
+            }
+            
+            setupSocketEvents() {
+                this.socket.on('connect', () => {
+                    this.updateConnectionStatus(true);
+                    this.addLogEntry('Socket接続が確立されました');
+                    this.socket.emit('requestStatus');
+                });
+                
+                this.socket.on('disconnect', () => {
+                    this.updateConnectionStatus(false);
+                    this.addLogEntry('Socket接続が切断されました');
+                });
+                
+                this.socket.on('status', (data) => {
+                    this.updateStatus(data);
+                });
+                
+                this.socket.on('fileChanged', (data) => {
+                    this.addLogEntry(`ファイル${data.action}: ${data.type}/${data.fileName}`);
+                });
+                
+                this.socket.on('comparisonComplete', (data) => {
+                    this.updateResults(data.results);
+                    this.addLogEntry('画像比較が完了しました');
+                });
+                
+                this.socket.on('processingStarted', () => {
+                    this.addLogEntry('人物画像処理を開始しました');
+                    this.setProcessingState(true);
+                });
+                
+                this.socket.on('imageProcessed', (data) => {
+                    const percentage = Math.round(data.progress * 100);
+                    this.updateProgress(percentage);
+                    this.addLogEntry(`処理完了: ${data.file} (${percentage}%)`);
+                });
+                
+                this.socket.on('processingComplete', (results) => {
+                    this.addLogEntry(`人物画像処理が完了しました (${results.length}枚)`);
+                    this.setProcessingState(false);
+                    this.updateProgress(100);
+                });
+                
+                this.socket.on('processingError', (error) => {
+                    this.addLogEntry(`処理エラー: ${error}`);
+                    this.setProcessingState(false);
+                });
+            }
+            
+            updateConnectionStatus(connected) {
+                const statusIndicator = document.getElementById('connectionStatus');
+                const statusText = document.getElementById('connectionText');
+                
+                if (connected) {
+                    statusIndicator.className = 'status-indicator status-connected';
+                    statusText.textContent = '接続済み';
+                } else {
+                    statusIndicator.className = 'status-indicator status-disconnected';
+                    statusText.textContent = '切断';
+                }
+            }
+            
+            updateStatus(data) {
+                document.getElementById('originalCount').textContent = data.originalImages;
+                document.getElementById('targetCount').textContent = data.targetImages;
+                document.getElementById('comparisonCount').textContent = data.comparisons;
+                document.getElementById('lastUpdate').textContent = 
+                    new Date(data.lastUpdate).toLocaleTimeString('ja-JP');
+                
+                // 平均類似度の計算（フロントエンドで概算）
+                const avgElement = document.getElementById('avgSimilarity');
+                if (data.comparisons > 0) {
+                    // サーバーから結果を取得して平均を計算
+                    fetch('/api/results')
+                        .then(response => response.json())
+                        .then(results => {
+                            const similarities = Object.values(results)
+                                .filter(r => r.status === 'success' && r.similarity !== undefined)
+                                .map(r => r.similarity);
+                            
+                            if (similarities.length > 0) {
+                                const avg = similarities.reduce((sum, val) => sum + val, 0) / similarities.length;
+                                avgElement.textContent = avg.toFixed(1) + '%';
+                            }
+                        });
+                } else {
+                    avgElement.textContent = '0%';
+                }
+            }
+            
+            updateResults(results) {
+                this.results = results;
+                const container = document.getElementById('resultsContainer');
+                
+                if (Object.keys(results).length === 0) {
+                    container.innerHTML = '<p>画像を配置すると、ここに比較結果が表示されます...</p>';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                for (const [key, result] of Object.entries(results)) {
+                    const resultDiv = document.createElement('div');
+                    resultDiv.className = `result-item ${result.status === 'error' ? 'error' : ''}`;
+                    
+                    if (result.status === 'success') {
+                        resultDiv.innerHTML = `
+                            <div class="result-name">${key}</div>
+                            <div class="result-similarity">${result.similarity}%</div>
+                        `;
+                    } else {
+                        resultDiv.innerHTML = `
+                            <div class="result-name">${key}</div>
+                            <div class="result-error">エラー: ${result.error || '不明なエラー'}</div>
+                        `;
+                    }
+                    
+                    container.appendChild(resultDiv);
+                }
+            }
+            
+            addLogEntry(message) {
+                const container = document.getElementById('logContainer');
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                
+                const timestamp = new Date().toLocaleTimeString('ja-JP');
+                entry.innerHTML = `
+                    <span class="log-timestamp">[${timestamp}]</span>
+                    ${message}
+                `;
+                
+                container.insertBefore(entry, container.firstChild);
+                
+                // ログエントリの数を制限
+                const entries = container.children;
+                if (entries.length > 50) {
+                    container.removeChild(entries[entries.length - 1]);
+                }
+            }
+            
+            async startImageProcessing() {
+                try {
+                    const response = await fetch('/api/process-images', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Processing request failed');
+                    }
+                } catch (error) {
+                    this.addLogEntry(`処理開始エラー: ${error.message}`);
+                }
+            }
+            
+            setProcessingState(processing) {
+                const processBtn = document.getElementById('processBtn');
+                if (processBtn) {
+                    processBtn.disabled = processing;
+                    processBtn.textContent = processing ? '処理中...' : '画像処理を開始';
+                }
+            }
+            
+            updateProgress(percentage) {
+                // プログレスバーがあれば更新
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = percentage + '%';
+                }
+            }
+        }
+        
+        // アプリケーションの初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            new CopilotUI();
+        });
+    </script>
+</body>
+</html>
